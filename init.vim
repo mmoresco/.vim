@@ -1,0 +1,1 @@
+/home/mmoresco/.vimrc
