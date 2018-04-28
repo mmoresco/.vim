@@ -1,4 +1,16 @@
-execute pathogen#infect()
+call plug#begin()
+Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
+Plug 'junegunn/fzf.vim'
+Plug 'itchyny/lightline.vim'
+Plug 'airblade/vim-gitgutter'
+Plug 'tpope/vim-surround'
+Plug 'tpope/vim-commentary'
+Plug 'mileszs/ack.vim'
+Plug 'ludovicchabant/vim-gutentags'
+Plug 'tpope/vim-fugitive'
+Plug 'justinmk/vim-sneak'
+Plug 'matze/vim-move'
+call plug#end()
 
 " Visual options
 set guioptions=egmt         " Remove toolbar, scrollbars
@@ -8,7 +20,7 @@ set nowrap                  " Disable word wrap
 set vb                      " Visual bell instead of beeps
 set ruler                   " Displays cursor position on bottom right of screen
 set laststatus=2            " Always show the status line"
-set cursorline 		    " Show current line
+set cursorline         " Show current line
 set fillchars=vert:\│
 hi VertSplit ctermfg=green
 hi Search cterm=NONE ctermfg=black ctermbg=Yellow
@@ -42,10 +54,10 @@ set showmatch
 set backspace=2
 
 " Indentation
-set autoindent 		" Indent new lines if you're indented
-set smartindent 	" Indent lines after open bracket in programming language
+set autoindent     " Indent new lines if you're indented
+set smartindent   " Indent lines after open bracket in programming language
 " C indentation style
-autocmd FileType c,cpp,make,automake,conf setlocal cinoptions=+4,(4:0 cindent noexpandtab shiftwidth=8 tabstop=8 softtabstop=8
+autocmd FileType javascript,c,cpp,make,automake,conf setlocal cinoptions=+4,(4:0 cindent noexpandtab shiftwidth=8 tabstop=8 softtabstop=8
 
 " Assists code formatting
 set shiftwidth=4
@@ -65,6 +77,13 @@ autocmd FileType nerdtree noremap <buffer> <c-left> <nop>
 autocmd FileType nerdtree noremap <buffer> <c-h> <nop>
 autocmd FileType nerdtree noremap <buffer> <c-right> <nop>
 autocmd FileType nerdtree noremap <buffer> <c-l> <nop>
+
+" Open NERDTree on startup if no files were specified
+autocmd StdinReadPre * let s:std_in=1
+autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
+
+" Close vim if the only window left open is NERDTree
+autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
 
 "------  Fugitive  ------
 "https://github.com/tpope/vim-fugitive
@@ -110,8 +129,6 @@ let g:airline#extensions#tabline#enabled = 1
  " Show all open buffers and their status
  nmap <leader>bl :ls<CR>
 
- nmap <leader>t :TagbarToggle<CR>
-
  " ctrlp
 set runtimepath^=~/.vim/bundle/ctrlp.vim
 let g:ctrlp_map = '<c-p>'
@@ -128,8 +145,14 @@ set wildignore+=*Godeps*                    " Go
 set wildignore+=*/tmp/*,*.so,*.swp,*.zip
 let g:ctrlp_working_path_mode = 'rc'
 let g:ctrlp_custom_ignore = {
-	\ 'dir': '\v[\/](git|build|rtp-messages)$',
-	\ }
+  \ 'dir': '\v[\/](git|build|node-modules|rtp-messages)$',
+  \ 'file': 'tags'
+  \ }
+
+let g:ctrlp_cache_dir = $HOME . '/.cache/ctrlp'
+if executable('ag')
+  let g:ctrlp_user_command = 'ag %s -l --nocolor -g ""'
+endif
 
 set runtimepath^=~/.vim/bundle/ag
 
@@ -178,7 +201,65 @@ let &t_SI = "\<Esc>Ptmux;\<Esc>\<Esc>]50;CursorShape=1\x7\<Esc>\\"
 " let &t_SR = "\<Esc>Ptmux;\<Esc>\<Esc>]50;CursorShape=2\x7\<Esc>\\"
 let &t_EI = "\<Esc>Ptmux;\<Esc>\<Esc>]50;CursorShape=0\x7\<Esc>\\"
 
-" Make Vim to handle long lines nicely.
+" Make Vim handle long lines nicely.
 set wrap
 set textwidth=79
 set formatoptions=qrn1
+
+:imap jk <Esc>
+au FileType yaml setlocal tabstop=2 expandtab shiftwidth=2 softtabstop=2
+autocmd FileType javascript setlocal tabstop=2 expandtab shiftwidth=2 softtabstop=2
+
+" Auto-install vim plug
+if empty(glob('~/.vim/autoload/plug.vim'))
+  silent !curl -fLo ~/.vim/autoload/plug.vim --create-dirs
+    \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+  autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+endif
+
+nmap ; :Buffers<CR>
+nmap <Leader>f :Files<CR>
+nmap <Leader>t :Tags<CR>
+nmap <Leader>g :GFiles?<CR>
+nmap <Leader>c :Commits<CR>
+nmap <Leader>m :Marks<CR>
+nmap <Leader>r :Commands<CR>
+
+let g:lightline = {
+      \ 'colorscheme': 'jellybeans',
+      \ 'active': {
+      \   'left': [ [ 'mode', 'paste' ],
+      \             [ 'gitbranch', 'readonly', 'filename', 'modified' ] ]
+      \ },
+      \ 'component_function': {
+      \   'gitbranch': 'fugitive#head'
+      \ },
+      \}
+
+" git gutter
+let g:gitgutter_sign_added = '·'
+let g:gitgutter_sign_modified = '·'
+let g:gitgutter_sign_removed = '·'
+let g:gitgutter_sign_removed_first_line = '·'
+let g:gitgutter_sign_modified_removed = '·'
+let g:gitgutter_enabled = 1
+let g:gitgutter_signs_enabled = 1
+set updatetime=500
+
+" open vimrc
+:nnoremap <leader>ev :vsplit ~/.vimrc<cr>
+
+" source vimrc
+:nnoremap <leader>sv :source ~/.vimrc<cr>
+
+" gutentags
+let g:gutentags_modules=['cscope', 'ctags']
+let g:gutentags_file_list_command = {
+      \ 'markers': {
+      \ '.git': 'git ls-files',
+      \ 'submodules': 'ls -R .submodules',
+      \ },
+      \ }
+
+" vim-sneak
+let g:sneak#s_next = 1
